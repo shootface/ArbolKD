@@ -4,13 +4,15 @@ import numpy as np
 import pandas as pd
 import os
 from pandas import DataFrame, read_csv
+import pygraphviz as pgv
+from PIL import Image
 #from graphviz import Digraph
 
 
 df = pd.read_csv('./avila/avila-ts.txt')
 #df.info()
 aux = df.values.tolist()
-#(intercolumnar distance,upper margin,lower margin,exploitation,row number,modular ratio,interlinear spacing,weight,peak number,modular ratio/ interlinear spacing,clase),
+heads = ["intercolumnar distance","upper margin","lower margin","exploitation","row number","modular ratio","interlinear spacing","weight,peak number","modular ratio/ interlinear spacing","clase"]
 points = [
 (-3.498799,0.250492,0.23207,1.224178,-4.922215,1.145386,0.182426,-0.165983,-0.123005,1.087144,'W'),
 (0.204355,-0.354049,0.32098,0.410166,-0.989576,-2.218127,0.220177,0.181844,2.090879,-2.009758,'A'),
@@ -51,20 +53,20 @@ def kdtree(pointList, depth=0):
     # Create node and construct subtrees
     node = Node()
     valueInAxis = pointList[median][axis]
-    node.head = 'x '+str(axis)+ '<=' + str(valueInAxis)
+    node.head = heads[axis]+ '<=' + str(valueInAxis)
     node.location = pointList[median]
     node.leftChild = kdtree(pointList[0:median], depth+1)
     node.rightChild = kdtree(pointList[median+1:], depth+1)
     return node
 
-#tree = kdtree(aux)
-tree = kdtree(points)
+tree = kdtree(aux)
+#tree = kdtree(points)
 
 print(tree.location)
+print(tree.head)
 
-#u1 = Digraph('arbol', filename='arbol.gv', strict=True)
-#u1.attr(size='126,6')
-#u1.node_attr.update(color='lightblue2', style='filled')
+g = pgv.AGraph(strict = True, directed = False)
+g.node_attr['shape']='box'
 
 def grafTree(tree,depth=0,id='root'):
     if tree is not None:
@@ -78,18 +80,22 @@ def grafTree(tree,depth=0,id='root'):
             maxDepth = 3
             if depth <= maxDepth:
                 if id == 'root':
-                    u1.node(id, label=tree.head)
-                if hasattr(tree.leftChild, 'condition'):
-                    u1.node(idLeft, label=tree.leftChild.head)
-                    u1.edge(id, idLeft, label='left(yes)')
-                if hasattr(tree.rightChild, 'condition'):
-                    u1.node(idRight, label=tree.rightChild.head)
-                    u1.edge(id, idRight, label='right(no)')
+                    g.add_node(id, label=tree.head)
+                if hasattr(tree.leftChild, 'head'):
+                    g.add_node(idLeft, label=tree.leftChild.head)
+                    g.add_edge(id, idLeft, label='left(yes)')
+                    
+                if hasattr(tree.rightChild, 'head'):
+                    g.add_node(idRight, label=tree.rightChild.head)
+                    g.add_edge(id, idRight, label='right(no)')
+                    
             grafTree(tree.leftChild, depth + 1, idLeft)
             grafTree(tree.rightChild, depth + 1, idRight)
     else:
-        # print('no hay mas nodos en nivel: ' + str(depth))
+        # print(str(depth))
         return
 
-#grafTree(tree)
-#u1.render()
+grafTree(tree)
+g.write("./avila.dot")
+g.layout(prog = 'dot')
+g.draw('./avila.png')
