@@ -1,0 +1,5 @@
+strict digraph arbol {
+	node [color=lightblue2 style=filled]
+	size="126,6"
+	root [label="x 0<=0.068573"]
+}
